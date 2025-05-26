@@ -50,20 +50,23 @@
     }
     
     /* ====================== SUDOKU GRID ====================== */
+    /* Impostiamo dimensioni fisse per la griglia in modo che ogni cella sia abbastanza grande */
     #sudoku-container {
       margin: 0 auto;
-      max-width: 500px;
+      /* 9 celle di 70px → 630px, con bordi il tutto risulta ben centrato */
+      width: 630px;
+      height: 630px;
       display: grid;
-      grid-template-columns: repeat(9, 1fr);
-      gap: 0;
+      grid-template-columns: repeat(9, 70px);
+      grid-template-rows: repeat(9, 70px);
       border: 3px solid #000;
       background: #fff;
     }
     .cell {
       border: 1px solid #666;
-      width: 100%;
-      height: 0;
-      padding-bottom: 100%; /* mantiene le celle quadrate */
+      /* Dimensioni fisse in modo da non dover usare trucchi di padding per il quadrato */
+      width: 70px;
+      height: 70px;
       position: relative;
       background: #fff;
     }
@@ -74,32 +77,34 @@
       width: 100%;
       height: 100%;
       text-align: center;
-      font-size: 1.5em;
+      font-size: 2em;
       font-weight: bold;
       background: transparent;
       border: none;
       outline: none;
     }
-    /* Briosi bordi per le sottogriglie 3x3 */
+    /* Bordo spesso per distinguere le sottogriglie 3x3 */
     .cell.row-0 { border-top: 3px solid #000; }
     .cell.row-2 { border-bottom: 3px solid #000; }
     .cell.row-3 { border-top: 3px solid #000; }
     .cell.row-5 { border-bottom: 3px solid #000; }
     .cell.row-6 { border-top: 3px solid #000; }
     .cell.row-8 { border-bottom: 3px solid #000; }
+    
     .cell.col-0 { border-left: 3px solid #000; }
     .cell.col-2 { border-right: 3px solid #000; }
     .cell.col-3 { border-left: 3px solid #000; }
     .cell.col-5 { border-right: 3px solid #000; }
     .cell.col-6 { border-left: 3px solid #000; }
     .cell.col-8 { border-right: 3px solid #000; }
-    /* Celle pre-riempite */
+    
+    /* Celle pre-riempite hanno uno sfondo differente ed un cursore non interattivo */
     .given input {
       color: #000;
       background: #ddd;
       cursor: default;
     }
-    /* Evidenziazione se c’è un errore (usata dalla validazione) */
+    /* Evidenzia errori nelle celle */
     .error {
       background: #ffcccc;
     }
@@ -156,11 +161,14 @@
     
     /* ====================== RESPONSIVE STYLES ====================== */
     @media (max-width: 600px) {
-      .cell input {
-        font-size: 1.2em;
-      }
       #sudoku-container {
-        max-width: 100%;
+        width: 90vw;
+        height: 90vw;
+        grid-template-columns: repeat(9, 1fr);
+        grid-template-rows: repeat(9, 1fr);
+      }
+      .cell input {
+        font-size: 1.5em;
       }
     }
   </style>
@@ -219,16 +227,16 @@
      ***********************************************/
     let solution = [];       // Complete solution board (9x9 array)
     let puzzle = [];         // Current puzzle board (9x9 array) with blanks (0)
-    let initialPuzzle = [];  // Copy of the initial puzzle (for reset)
+    let initialPuzzle = [];  // Copy of the initial puzzle state for "Reset Puzzle"
     let timerInterval, startTime;
-    // Difficulty mapping: number of cells to remove
+    // Define, for each difficulty, how many cells to remove (more removal = higher difficulty)
     const difficultyRemoval = {
       easy: 35,
       medium: 45,
       hard: 55,
       extreme: 60
     };
-
+    
     /***********************************************
      * Sudoku Generator using Backtracking
      ***********************************************/
@@ -237,7 +245,7 @@
       if (fillGrid(board)) {
         return board;
       } else {
-        console.error("Failed to generate the sudoku board.");
+        console.error("Failed to generate sudoku board.");
         return board;
       }
     }
@@ -256,7 +264,7 @@
                 board[row][col] = 0;
               }
             }
-            return false; // No valid number found, trigger backtracking
+            return false;
           }
         }
       }
@@ -264,13 +272,13 @@
     }
     
     function isSafe(board, row, col, num) {
-      // Check row and column.
+      // Check row and column conflict.
       for (let i = 0; i < 9; i++) {
         if (board[row][i] === num || board[i][col] === num) return false;
       }
-      // Check local 3x3 subgrid.
-      let startRow = row - row % 3;
-      let startCol = col - col % 3;
+      // Check the 3x3 subgrid.
+      let startRow = row - (row % 3);
+      let startCol = col - (col % 3);
       for (let r = 0; r < 3; r++) {
         for (let c = 0; c < 3; c++) {
           if (board[startRow + r][startCol + c] === num) return false;
@@ -288,7 +296,8 @@
     }
     
     /***********************************************
-     * Remove Cells to Create Puzzle (Based on Difficulty)
+     * Remove Cells to Create Puzzle
+     * Create a puzzle by removing an appropriate number of cells
      ***********************************************/
     function removeCells(board, count) {
       let puzzleBoard = board.map(row => row.slice());
@@ -314,7 +323,6 @@
         for (let col = 0; col < 9; col++) {
           let cellDiv = document.createElement("div");
           cellDiv.className = "cell row-" + row + " col-" + col;
-          // Add data attributes for row and col to help with styling and identification
           cellDiv.dataset.row = row;
           cellDiv.dataset.col = col;
           
@@ -323,7 +331,6 @@
           input.maxLength = "1";
           input.dataset.row = row;
           input.dataset.col = col;
-          // If the cell in the grid is prefilled, show that value and disable editing.
           if (grid[row][col] !== 0) {
             input.value = grid[row][col];
             cellDiv.classList.add("given");
@@ -344,7 +351,6 @@
     function handleCellInput(e) {
       let input = e.target;
       let value = input.value;
-      // Allow only digits 1-9.
       if (!/^[1-9]$/.test(value)) {
         input.value = "";
         return;
@@ -352,7 +358,6 @@
       let row = parseInt(input.dataset.row);
       let col = parseInt(input.dataset.col);
       puzzle[row][col] = parseInt(value);
-      // Validate the cell for any conflicts.
       validateCell(row, col);
       if (checkSudoku()) {
         document.getElementById("message").textContent = "Congratulations! Puzzle solved!";
@@ -366,23 +371,23 @@
       let cellValue = currentInput.value;
       if (cellValue === "") return;
       let conflict = false;
-      // Validate Row
+      // Validate row
       for (let c = 0; c < 9; c++) {
         if (c !== col) {
           let other = document.querySelector(`input[data-row="${row}"][data-col="${c}"]`);
           if (other && other.value === cellValue) conflict = true;
         }
       }
-      // Validate Column
+      // Validate column
       for (let r = 0; r < 9; r++) {
         if (r !== row) {
           let other = document.querySelector(`input[data-row="${r}"][data-col="${col}"]`);
           if (other && other.value === cellValue) conflict = true;
         }
       }
-      // Validate 3x3 Subgrid
-      let startRow = row - row % 3;
-      let startCol = col - col % 3;
+      // Validate block
+      let startRow = row - (row % 3);
+      let startCol = col - (col % 3);
       for (let r = startRow; r < startRow + 3; r++) {
         for (let c = startCol; c < startCol + 3; c++) {
           if (r === row && c === col) continue;
@@ -417,7 +422,6 @@
      * Check if the Sudoku Puzzle is Solved
      ***********************************************/
     function checkSudoku() {
-      // Check each row:
       for (let row = 0; row < 9; row++) {
         let seen = new Set();
         for (let col = 0; col < 9; col++) {
@@ -427,7 +431,6 @@
           seen.add(val);
         }
       }
-      // Check each column:
       for (let col = 0; col < 9; col++) {
         let seen = new Set();
         for (let row = 0; row < 9; row++) {
@@ -437,7 +440,6 @@
           seen.add(val);
         }
       }
-      // Check each 3x3 subgrid:
       for (let blockRow = 0; blockRow < 3; blockRow++) {
         for (let blockCol = 0; blockCol < 3; blockCol++) {
           let seen = new Set();
@@ -455,7 +457,7 @@
     }
     
     /***********************************************
-     * New Game and Reset Puzzle Functions
+     * New Game and Reset Functions
      ***********************************************/
     function newGame() {
       clearInterval(timerInterval);
@@ -463,7 +465,6 @@
       let removeCount = difficultyRemoval[difficulty];
       solution = generateCompleteSudoku();
       puzzle = removeCells(solution, removeCount);
-      // Save a copy for reset
       initialPuzzle = puzzle.map(row => row.slice());
       renderSudoku(puzzle);
       startTimer();
@@ -494,7 +495,7 @@
     };
     
     /***********************************************
-     * Initialize the Game on Page Load
+     * Initialize Game on Page Load
      ***********************************************/
     newGame();
   </script>
