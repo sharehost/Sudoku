@@ -1,4 +1,4 @@
-# Sudoku – Final Release
+# Sudoku – WEBGAME
 #### Author: Bocaletto Luca
 
 [![Made with HTML5](https://img.shields.io/badge/Made%20with-HTML5-E34F26?logo=html5)](https://www.w3.org/html/)
@@ -7,7 +7,7 @@
 
 ## Overview
 
-**Sudoku – Final Release** is a modern, professional, and fully responsive web game developed in a single-page application. This version faithfully recreates the classic 9x9 Sudoku puzzle with:
+**Sudoku – WEBGAME** is a modern, professional, and fully responsive web game developed in a single-page application. This version faithfully recreates the classic 9x9 Sudoku puzzle with:
 
 - **Complete Game Logic:**  
   Utilizes a backtracking algorithm to generate a complete solution and then removes cells according to the selected difficulty to create a unique, solvable puzzle.
